@@ -64,7 +64,7 @@
         (function () {
             // Check if the current protocol is HTTPS and use the appropriate WebSocket protocol
             const socketProtocol = window.location.protocol === 'wss://';
-            const socket = new WebSocket('wss://' + window.location.hostname + ':40011');
+            const socket = new WebSocket('ws://' + window.location.hostname + ':40011');
 
             let lastHexString = "";
             let lastElement = null;
