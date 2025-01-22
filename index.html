@@ -1,0 +1,67 @@
+<script>
+    (function () {
+        // Check if the current protocol is HTTPS and use the appropriate WebSocket protocol
+        const socketProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const socket = new WebSocket(socketProtocol + window.location.hostname + ':40011');
+        
+        let lastHexString = "";
+        let lastElement = null;
+        let lastCount = 0;
+
+        const dataContainer = document.getElementById('dataContainer');
+        const clearButton = document.getElementById('clearButton');
+
+        socket.onopen = () => {
+            console.log('Connected to WebSocket server');
+        };
+
+        socket.onmessage = (event) => {
+            // Handle Buffer data and convert to hex
+            if (event.data instanceof Blob) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const buffer = new Uint8Array(reader.result);
+                    const hexString = Array.from(buffer).map(byte => byte.toString(16).padStart(2, '0')).join(' ');
+
+                    if (hexString === lastHexString) {
+                        lastCount++;
+                        if (lastElement) {
+                            lastElement.textContent = `${hexString} (count: ${lastCount})`;
+                        }
+                    } else {
+                        lastHexString = hexString;
+                        lastCount = 1;
+
+                        const dataItem = document.createElement('div');
+                        dataItem.className = 'data-item';
+                        dataItem.textContent = `${hexString} (count: ${lastCount})`;
+                        dataContainer.appendChild(dataItem);
+                        lastElement = dataItem;
+
+                        // Scroll to the latest message
+                        dataContainer.scrollTop = dataContainer.scrollHeight;
+                    }
+                };
+                reader.readAsArrayBuffer(event.data);
+            }
+        };
+
+        socket.onerror = (error) => {
+            alert('WebSocket error: ' + error.message);
+            console.error('WebSocket error:', error);
+        };
+
+        socket.onclose = () => {
+            alert('WebSocket connection closed');
+            console.log('WebSocket connection closed');
+        };
+
+        // Clear data button functionality
+        clearButton.addEventListener('click', () => {
+            dataContainer.innerHTML = '';
+            lastHexString = "";
+            lastElement = null;
+            lastCount = 0;
+        });
+    })();
+</script>
